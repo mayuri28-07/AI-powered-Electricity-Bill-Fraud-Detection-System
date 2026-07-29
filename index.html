@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ElectroGuard AI — Electricity Fraud Detection</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="mob-overlay" onclick="closeMobSidebar()"></div>
+<div id="toast-wrap"></div>
+<div id="float-orb" title="Cycle Views">
+  <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+</div>
+<input type="file" id="file-input" style="display:none" accept=".csv,.xlsx,.xls,.pdf,.txt,.json" onchange="handleFileUpload(event)"/>
+<input type="file" id="import-input" style="display:none" accept=".json" onchange="handleImportChat(event)"/>
+
+<div id="app">
+<aside id="sidebar">
+  <div class="sb-head">
+    <a class="sb-logo" onclick="showView('chat')" style="text-decoration:none">
+      <div class="sb-logo-icon"><svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <span class="logo-text">ElectroGuard AI</span>
+    </a>
+    <button class="collapse-btn" onclick="toggleSidebar()" title="Collapse">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+  <button class="new-chat-btn" onclick="startNewChat()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="sl">New Chat</span>
+  </button>
+  <div class="sb-scroll">
+    <div class="sb-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="chat-search" placeholder="Search chats…" oninput="filterChats(this.value)"/>
+    </div>
+    <div class="sec-title">Navigation</div>
+    <div class="nav-item active" id="nav-chat" onclick="showView('chat')">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="sl">Chat</span>
+    </div>
+    <div class="nav-item" id="nav-dash" onclick="showView('dashboard')">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="sl">Dashboard</span>
+    </div>
+    <div class="nav-item" id="nav-analytics" onclick="showView('analytics')">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="sl">Analytics</span>
+    </div>
+    <div class="nav-item" id="nav-reports" onclick="showView('reports')">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="sl">Fraud Reports</span>
+      <span class="n-badge" id="rpt-badge">3</span>
+    </div>
+    <div class="nav-item" id="nav-settings" onclick="showView('settings')">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="sl">Settings</span>
+    </div>
+    <div class="divider"></div>
+    <div class="sec-title">Recent Chats</div>
+    <div id="chat-hist-list"></div>
+  </div>
+  <div class="sb-foot">
+    <div class="nav-item" onclick="exportChat()" style="margin:0">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span class="sl">Export Chat</span>
+    </div>
+  </div>
+</aside>
+
+<main id="main">
+  <header id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="mob-menu-btn" onclick="openMobSidebar()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="tb-title" id="tb-title">Electricity Fraud Detection AI</div>
+        <div class="tb-sub" id="tb-sub">Powered by Groq · llama-3.3-70b-versatile</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div class="voice-ind" id="voice-ind-top"><div class="v-dot"></div>Listening…</div>
+      <div id="live-clock">00:00:00</div>
+      <div id="conn-status"><div class="conn-dot"></div><span id="conn-txt">Ready</span></div>
+      <button class="icon-btn" onclick="exportChat()" title="Export chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="icon-btn" onclick="importChat()" title="Import chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </button>
+      <button class="icon-btn" onclick="downloadSampleCSV()" title="Download sample CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 17 15 14"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CHAT VIEW -->
+  <div id="view-chat" class="view active">
+    <div id="welcome">
+      <div class="orb-wrap">
+        <div class="orb-ring orb-r1"></div>
+        <div class="orb-ring orb-r2"></div>
+        <div class="orb-core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+      </div>
+      <div class="wh-head">
+        <h1>Electricity Fraud Detection AI</h1>
+        <p>Analyze electricity usage patterns, detect billing anomalies, and generate fraud reports powered by Groq AI.</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(99,102,241,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="stat-val c-acc" id="sw-consumers">1,248</div><div class="stat-lbl">Total Consumers</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-val c-red" id="sw-suspicious">47</div><div class="stat-lbl">Suspicious Cases</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(249,115,22,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="stat-val c-org" id="sw-fraud-pct">3.8%</div><div class="stat-lbl">Fraud Rate</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="stat-val c-grn" id="sw-avg-kwh">284 kWh</div><div class="stat-lbl">Avg Consumption</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="stat-val c-ylw" id="sw-alerts">12</div><div class="stat-lbl">Today's Alerts</div></div>
+      </div>
+      <div class="chips">
+        <div class="chip" onclick="sendSuggestion('Analyze my electricity bill for anomalies and potential fraud indicators')"><span>🔍</span>Analyze Bill</div>
+        <div class="chip" onclick="sendSuggestion('Detect all fraud patterns in the usage data and explain every finding in detail')"><span>🚨</span>Detect Fraud</div>
+        <div class="chip" onclick="sendSuggestion('Show monthly consumption trends and identify peak and low usage periods')"><span>📈</span>Consumption Trends</div>
+        <div class="chip" onclick="sendSuggestion('Find all billing anomalies and unexpected usage patterns in the data')"><span>⚡</span>Find Anomalies</div>
+        <div class="chip" onclick="sendSuggestion('Generate a comprehensive fraud detection report with risk scores for all consumers')"><span>📋</span>Generate Report</div>
+        <div class="chip" onclick="sendSuggestion('Compare this month billing with the previous 6 months average and flag deviations')"><span>📊</span>Billing Comparison</div>
+        <div class="chip" onclick="sendSuggestion('Explain what meter tampering looks like in billing data and how to detect it')"><span>🔧</span>Meter Tampering</div>
+        <div class="chip" onclick="sendSuggestion('Calculate Z-scores for all consumption readings and identify statistical outliers')"><span>📐</span>Z-Score Analysis</div>
+        <div class="chip" onclick="downloadSampleCSV()"><span>📥</span>Download Sample CSV</div>
+      </div>
+    </div>
+    <div id="chat-msgs" style="display:none"></div>
+    <div id="input-area">
+      <div id="file-prev">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="fp-name" id="fp-name">file.csv</span>
+        <span class="fp-size" id="fp-size">0 KB</span>
+        <button class="fp-rm" onclick="removeFile()" title="Remove"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="inp-box">
+        <button class="inp-btn" onclick="document.getElementById('file-input').click()" title="Attach file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+        <textarea id="chat-input" rows="1" placeholder="Ask anything about electricity bills…" onkeydown="handleKeydown(event)" oninput="handleInputChange(this)"></textarea>
+        <button class="inp-btn" id="mic-btn" onclick="toggleVoice()" title="Voice input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+        <button id="send-btn" onclick="handleSend()" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+      <div class="inp-foot">
+        <div class="inp-counters">
+          <div class="voice-ind" id="voice-ind-inp"><div class="v-dot"></div>Listening…</div>
+          <span class="counter" id="char-cnt">0 chars</span>
+          <span class="counter" id="tok-cnt">~0 tokens</span>
+        </div>
+        <div class="qa-chips">
+          <button class="qa-chip" onclick="sendSuggestion('Analyze bill for fraud indicators and give risk score')">⚡ Analyze Bill</button>
+          <button class="qa-chip" onclick="sendSuggestion('Generate a formal fraud detection report with tables and risk scores')">📋 Fraud Report</button>
+          <button class="qa-chip" onclick="sendSuggestion('Explain the detected anomalies with confidence scores and reasons')">🔍 Explain Fraud</button>
+          <button class="qa-chip" onclick="sendSuggestion('Show monthly consumption trend analysis with statistical summary')">📈 Usage Trend</button>
+          <button class="qa-chip" onclick="sendSuggestion('Compare billing amounts with consumption kWh and flag inconsistencies')">📊 Compare Billing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="view-dashboard" class="view" style="overflow-y:auto;padding:24px;flex-direction:column;gap:0">
+    <div class="view-hd"><div class="vt">📊 Fraud Detection Dashboard</div><div class="vs">Real-time monitoring of electricity consumption and fraud indicators</div></div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-head"><div class="kpi-icon" style="background:rgba(99,102,241,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="kpi-trend t-neu">+2.1%</span></div><div class="kpi-val" style="color:#a5b4fc" id="kpi-consumers">1,248</div><div class="kpi-lbl">Total Consumers</div></div>
+      <div class="kpi-card"><div class="kpi-head"><div class="kpi-icon" style="background:rgba(239,68,68,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><span class="kpi-trend t-up">▲ 5</span></div><div class="kpi-val" style="color:#ef4444" id="kpi-suspicious">47</div><div class="kpi-lbl">Suspicious Consumers</div></div>
+      <div class="kpi-card"><div class="kpi-head"><div class="kpi-icon" style="background:rgba(249,115,22,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><span class="kpi-trend t-up">▲ 0.3%</span></div><div class="kpi-val" style="color:#f97316" id="kpi-fraud-pct">3.8%</div><div class="kpi-lbl">Fraud Percentage</div></div>
+      <div class="kpi-card"><div class="kpi-head"><div class="kpi-icon" style="background:rgba(16,185,129,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="kpi-trend t-dn">▼ 12</span></div><div class="kpi-val" style="color:#10b981" id="kpi-avg-kwh">284</div><div class="kpi-lbl">Avg kWh / Month</div></div>
+      <div class="kpi-card"><div class="kpi-head"><div class="kpi-icon" style="background:rgba(245,158,11,.13)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="kpi-trend t-up">▲ 3</span></div><div class="kpi-val" style="color:#f59e0b" id="kpi-alerts">12</div><div class="kpi-lbl">Today's Alerts</div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Monthly Consumption Trend</div><div class="chart-wrap"><canvas id="ch-consumption"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Fraud Distribution by Category</div><div class="chart-wrap"><canvas id="ch-fraud-dist"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Risk Score Distribution</div><div class="chart-wrap"><canvas id="ch-risk-dist"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Daily Load Pattern — Normal vs Suspect</div><div class="chart-wrap"><canvas id="ch-daily"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS VIEW -->
+  <div id="view-analytics" class="view" style="overflow-y:auto;padding:24px;flex-direction:column;gap:0">
+    <div class="view-hd"><div class="vt">📈 Analytics</div><div class="vs">Deep-dive consumption pattern analysis and anomaly detection</div></div>
+    <div class="charts-grid">
+      <div class="chart-card" style="grid-column:1 / -1"><div class="chart-title">12-Month Consumption vs Billing Amount</div><div class="chart-wrap" style="height:230px"><canvas id="ch-combo"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Z-Score Anomaly Detection</div><div class="chart-wrap"><canvas id="ch-zscore"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Consumer Risk Breakdown</div><div class="chart-wrap"><canvas id="ch-risk-pie"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- REPORTS VIEW -->
+  <div id="view-reports" class="view" style="overflow-y:auto;padding:24px;flex-direction:column;gap:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <div><div class="vt">📋 Fraud Reports</div><div class="vs">Generated fraud detection reports and audit logs</div></div>
+      <button class="btn-p" onclick="generateFullReport()">+ Generate Report</button>
+    </div>
+    <div id="reports-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div id="view-settings" class="view" style="overflow-y:auto;padding:24px;flex-direction:column;gap:0">
+    <div class="view-hd"><div class="vt">⚙️ Settings</div><div class="vs">Configure your AI agent, API keys, and preferences</div></div>
+    <div class="s-section">
+      <div class="s-sec-hd">🔑 API Configuration</div>
+      <div class="s-row"><div><div class="s-lbl">Groq API Key</div><div class="s-desc">Paste your key from console.groq.com</div></div><div style="display:flex;gap:8px;align-items:center"><input type="password" class="s-input" id="s-api-key" placeholder="gsk_…" onchange="saveSettings()"/><button class="btn-p" onclick="testAPIKey()">Test Key</button></div></div>
+      <div class="s-row"><div><div class="s-lbl">AI Model</div><div class="s-desc">Select the Groq language model</div></div><select class="s-select" id="s-model" onchange="saveSettings()"><option value="llama-3.3-70b-versatile" selected>llama-3.3-70b-versatile</option><option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option><option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option><option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option><option value="gemma2-9b-it">gemma2-9b-it</option></select></div>
+      <div class="s-row"><div><div class="s-lbl">Temperature&nbsp;<span id="s-temp-val" class="c-acc">0.7</span></div><div class="s-desc">Higher = more creative · Lower = more precise</div></div><input type="range" class="s-range" id="s-temp" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('s-temp-val').textContent=this.value;updateRangeStyle(this);saveSettings()"/></div>
+      <div class="s-row"><div><div class="s-lbl">Streaming Responses</div><div class="s-desc">Show AI output word-by-word</div></div><label class="tog"><input type="checkbox" id="s-stream" checked onchange="saveSettings()"/><span class="tog-sl"></span></label></div>
+    </div>
+    <div class="s-section">
+      <div class="s-sec-hd">🎨 Preferences</div>
+      <div class="s-row"><div><div class="s-lbl">Voice Input</div><div class="s-desc">Enable microphone speech recognition</div></div><label class="tog"><input type="checkbox" id="s-voice" checked onchange="saveSettings()"/><span class="tog-sl"></span></label></div>
+      <div class="s-row"><div><div class="s-lbl">Voice Output (TTS)</div><div class="s-desc">Read AI responses aloud</div></div><label class="tog"><input type="checkbox" id="s-tts" onchange="saveSettings()"/><span class="tog-sl"></span></label></div>
+      <div class="s-row"><div><div class="s-lbl">Auto-scroll Chat</div><div class="s-desc">Scroll to newest message automatically</div></div><label class="tog"><input type="checkbox" id="s-autoscroll" checked onchange="saveSettings()"/><span class="tog-sl"></span></label></div>
+      <div class="s-row"><div><div class="s-lbl">Show Quick-Action Chips</div><div class="s-desc">Display prompt shortcut buttons below input</div></div><label class="tog"><input type="checkbox" id="s-chips" checked onchange="saveSettings()"/><span class="tog-sl"></span></label></div>
+    </div>
+    <div class="s-section">
+      <div class="s-sec-hd" style="color:var(--red)">⚠️ Danger Zone</div>
+      <div class="s-row"><div><div class="s-lbl">Clear All Chat History</div><div class="s-desc">Permanently delete all saved conversations</div></div><button class="btn-d" onclick="clearAllHistory()">Clear History</button></div>
+      <div class="s-row"><div><div class="s-lbl">Clear All Reports</div><div class="s-desc">Delete all saved fraud reports</div></div><button class="btn-d" onclick="clearAllReports()">Clear Reports</button></div>
+      <div class="s-row"><div><div class="s-lbl">Reset All Settings</div><div class="s-desc">Restore factory defaults and reload</div></div><button class="btn-d" onclick="resetAllSettings()">Reset</button></div>
+    </div>
+    <div class="s-section">
+      <div class="s-sec-hd">ℹ️ About</div>
+      <div class="s-row"><div><div class="s-lbl">ElectroGuard AI</div><div class="s-desc">Version 1.0.0 · Powered by Groq LLM API · Vanilla HTML/CSS/JS</div></div><div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono)">v1.0.0</div></div>
+      <div class="s-row"><div><div class="s-lbl">Keyboard Shortcuts</div><div class="s-desc"><code style="background:rgba(99,102,241,.12);padding:1px 5px;border-radius:3px;font-size:11px">Ctrl+K</code> Focus input &nbsp;·&nbsp; <code style="background:rgba(99,102,241,.12);padding:1px 5px;border-radius:3px;font-size:11px">Ctrl+N</code> New chat &nbsp;·&nbsp; <code style="background:rgba(99,102,241,.12);padding:1px 5px;border-radius:3px;font-size:11px">Ctrl+D</code> Dashboard &nbsp;·&nbsp; <code style="background:rgba(99,102,241,.12);padding:1px 5px;border-radius:3px;font-size:11px">Esc</code> Close sidebar</div></div></div>
+    </div>
+  </div>
+
+</main>
+</div>
+<!-- Load order matters: utils (state+constants) → api → fraud → dashboard → charts → chat (init last) -->
+<script src="utils.js"></script>
+<script src="api.js"></script>
+<script src="fraud.js"></script>
+<script src="dashboard.js"></script>
+<script src="charts.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>
